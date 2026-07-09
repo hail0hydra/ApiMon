@@ -1,7 +1,13 @@
 from fastapi import FastAPI, Response, status, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+# from typing import Optional
 from random import randrange
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import time
+import os
+from dotenv import load_dotenv
+
 
 app = FastAPI() # FastAPI instance
 
@@ -10,15 +16,42 @@ class Post(BaseModel): #extends BaseModel, inherits it, etc
     title:  str
     content: str
     published: bool = True # default
-    rating: Optional[int] = None # optional integer value from Typing Library
+
+
+'''
+Database
+'''
+
+load_dotenv()
+
+
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+
+# if DB connection fails, HTTP Server for API is not started
+while True:
+    try:
+        conn = psycopg2.connect(host='localhost', database='ApiMon DB', user=DB_USER, password=DB_PASSWORD, cursor_factory=RealDictCursor)
+        cursor = conn.cursor()
+
+        print("\t[+] Database Connection was successful")
+        break
+    except Exception as e:
+        print("Connection to DB failed")
+        print(e)
+        time.sleep(2) # Bruh why not have an async function do this, and if the Async func fails, stop everything
 
 
 myPosts = [
-        {"title": "title of post 1", "content": "content of post 1", "published": False, "rating": 3, "id": 1},
-        {"title": "favourite foods", "content": "I like pasta", "published": True, "rating": 4, "id": 2},
-        {"title": "welcome to the dojo", "content": "The python Ninja welcomes you", "published": False, "rating": 4, "id": 0},
+        {"title": "title of post 1", "content": "content of post 1", "published": False,  "id": 1},
+        {"title": "favourite foods", "content": "I like pasta", "published": True,  "id": 2},
+        {"title": "welcome to the dojo", "content": "The python Ninja welcomes you", "published": False,  "id": 0},
 ] # storing in memory
 
+
+'''
+Utility
+'''
 def findPostById(pid):
         for p in myPosts:
             if p["id"] == pid:
@@ -29,6 +62,11 @@ def deletePostById(pid):
         if p["id"] == pid:
             myPosts.remove(p)
             return True
+
+
+'''
+Endpoints
+'''
 
 # GET
 @app.get('/')
