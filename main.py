@@ -23,7 +23,7 @@ async def getPosts():
 
 
 # POST
-@app.post('/createpost')
+@app.post('/posts')
 async def createPost(req: Post): # using the Post pydantic Model/Schema
     # because of pydantic model being used, it will auto validate the required things mentioned in the model
     print(req)
