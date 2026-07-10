@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response, status, HTTPException
+from fastapi import Depends, FastAPI, Response, status, HTTPException
 from pydantic import BaseModel
 # from typing import Optional
 # from random import randrange
@@ -7,6 +7,11 @@ from psycopg2.extras import RealDictCursor
 import time
 import os
 from dotenv import load_dotenv
+
+from sqlalchemy.orm import Session
+from . import models
+from .database import SessionLocal, engine, get_db
+
 
 
 app = FastAPI() # FastAPI instance
@@ -21,6 +26,9 @@ class Post(BaseModel): #extends BaseModel, inherits it, etc
 '''
 Database
 '''
+
+
+models.Base.metadata.create_all(bind=engine)
 
 load_dotenv()
 
@@ -61,10 +69,11 @@ async def root():
     return {"message":"Welcome to my APIMon ( > - < )"} # auto convert to JSON
 
 @app.get('/posts')
-async def getPosts():
-    cursor.execute("""SELECT * FROM posts""")
-    posts = cursor.fetchall()
-    # return {"data": "This is your post ⚔️⚔️⚔️ "}
+async def getPosts(db: Session = Depends(get_db)):
+    # cursor.execute("""SELECT * FROM posts""")
+    # posts = cursor.fetchall()
+
+    posts = db.query(models.Post).all()
     return {"data": posts}
 
 @app.get('/posts/{pid}') # PATH PARAMETER
@@ -79,20 +88,37 @@ async def getPost(pid: int): # this checks if passed data can be converted to in
     return {"data": post}
 
 
+# SQLALCHEMY bs
+# @app.get('/sqlalchemy')
+# async def testPost(db: Session = Depends(get_db)):
+#
+#     posts = db.query(models.Post).all()
+#     return {"data": posts}
+
+
+
 # POST
 @app.post('/posts', status_code=status.HTTP_201_CREATED)
-async def createPost(req: Post): # using the Post pydantic Model/Schema
+async def createPost(req: Post, db: Session = Depends(get_db)): # using the Post pydantic Model/Schema
     # because of pydantic model being used, it will auto validate the required things mentioned in the model
     # print(req)
     # print(req.model_dump()) # converts to dict, all pydantic Models have this method
 
-    # postDict = req.model_dump()
-    # postDict["id"] = randrange(0, 1000000)
-    # myPosts.append(postDict)
-    cursor.execute(""" INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """, (req.title, req.content, req.published))
-    new_post = cursor.fetchone()
+    # cursor.execute(""" INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """, (req.title, req.content, req.published))
+    # new_post = cursor.fetchone()
+    #
+    # conn.commit()
 
-    conn.commit()
+
+
+    ## unpacking dictionary
+    # print(**req.model_dump())
+
+    # new_post = models.Post(title=req.title, content=req.content, published=req.published)
+    new_post = models.Post(**req.model_dump())
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post) # RETURNING *
 
     return {"data": new_post}
 

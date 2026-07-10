@@ -8,4 +8,5 @@ dependencies = [
     "fastapi[standard]>=0.139.0",
     "psycopg2>=2.9.12",
     "python-dotenv>=1.2.2",
+    "sqlalchemy>=1.4,<1.5",
 ]
