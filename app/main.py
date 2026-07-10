@@ -77,11 +77,15 @@ async def getPosts(db: Session = Depends(get_db)):
     return {"data": posts}
 
 @app.get('/posts/{pid}') # PATH PARAMETER
-async def getPost(pid: int): # this checks if passed data can be converted to int or not, if Yes then it converts it. No longer int() conversions
+async def getPost(pid: int, db: Session = Depends(get_db)): # this checks if passed data can be converted to int or not, if Yes then it converts it. No longer int() conversions
     # if not post:
     #     # res.status_code = status.HTTP_404_NOT_FOUND
-    cursor.execute(""" SELECT * FROM posts WHERE id = %s """, (pid,))
-    post = cursor.fetchone()
+    # cursor.execute(""" SELECT * FROM posts WHERE id = %s """, (pid,))
+    # post = cursor.fetchone()
+    # if not post:
+    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id: {pid} was not found") # simple handler with response
+    post = db.query(models.Post).filter(models.Post.id == pid).first()
+
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id: {pid} was not found") # simple handler with response
 
@@ -125,33 +129,44 @@ async def createPost(req: Post, db: Session = Depends(get_db)): # using the Post
 
 # DELETE
 # @app.delete('/posts/{pid}', status_code=status.HTTP_204_NO_CONTENT)
-@app.delete('/posts/{pid}') #buddy you can send a 200 back. there is no restriction as such.
-async def deletePost(pid: int):
-    cursor.execute(""" DELETE FROM posts WHERE id = %s RETURNING *""", (pid,))
-    deleted = cursor.fetchone()
+@app.delete('/posts/{pid}', status_code=status.HTTP_204_NO_CONTENT) #buddy you can send a 200 back. there is no restriction as such.
+async def deletePost(pid: int, db: Session = Depends(get_db)):
+    # cursor.execute(""" DELETE FROM posts WHERE id = %s RETURNING *""", (pid,))
+    # deleted = cursor.fetchone()
+    #
+    # conn.commit()
+    post = db.query(models.Post).filter(models.Post.id == pid)
 
-    conn.commit()
-
-    if not deleted:
+    if not post.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id: {pid} does not exist")
 
-    return {"deleted": deleted}
+    post.delete(synchronize_session=False)
+    db.commit()
 
 
 # UPDATE with PUT
 @app.put('/posts/{pid}')
-async def updatePost(pid:int, req: Post):
+async def updatePost(pid:int, req: Post, db: Session = Depends(get_db)):
 
-    cursor.execute(""" UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, (req.title, req.content, req.published, pid))
+    # cursor.execute(""" UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, (req.title, req.content, req.published, pid))
+    #
+    # post = cursor.fetchone()
+    #
+    # conn.commit()
+    post_query = db.query(models.Post).filter(models.Post.id == pid)
 
-    post = cursor.fetchone()
-
-    conn.commit()
+    post = post_query.first()
 
     if not post:
 
-        cursor.execute(""" INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) """, (req.title, req.content, req.published))
-        conn.commit()
-        raise HTTPException(status_code=status.HTTP_201_CREATED,detail=f"new post created!")
+        # cursor.execute(""" INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) """, (req.title, req.content, req.published))
+        # conn.commit()
+        # raise HTTPException(status_code=status.HTTP_201_CREATED,detail=f"new post created!")
 
-    return {"updated": post}
+        # Let's just send a 404.
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id: {pid} not found")
+
+    post_query.update(req.model_dump(), synchronize_session=False)
+    db.commit()
+
+    return {"updated": post_query.first()}
