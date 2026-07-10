@@ -6,15 +6,15 @@ from .database import SessionLocal, engine, get_db
 
 from typing import List
 
+from passlib.context import CryptContext
+
+
+
 
 app = FastAPI() # FastAPI instance
 
 
-
-'''
-Database
-'''
-
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") # settgin default hashing algorithm
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -84,6 +84,21 @@ async def createPost(req: schemas.PostCreate, db: Session = Depends(get_db)): # 
     db.refresh(new_post) # RETURNING *
 
     return new_post
+
+
+@app.post('/users', status_code=status.HTTP_201_CREATED, response_model=schemas.UserReponse)
+async def createUser(req: schemas.UserCreate ,db: Session = Depends(get_db)):
+    
+    #hash the password
+    hashed = pwd_context.hash(req.password)
+    req.password = hashed # set password to hashed
+
+    new_user = models.User(**req.model_dump())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return new_user
 
 
 # DELETE
