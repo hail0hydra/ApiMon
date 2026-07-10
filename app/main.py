@@ -1,11 +1,8 @@
 from fastapi import Depends, FastAPI, Response, status, HTTPException
 # from typing import Optional
 # from random import randrange
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import time
-import os
-from dotenv import load_dotenv
+# import psycopg2
+# from psycopg2.extras import RealDictCursor
 
 from sqlalchemy.orm import Session
 from . import models, schemas
@@ -23,24 +20,24 @@ Database
 
 models.Base.metadata.create_all(bind=engine)
 
-load_dotenv()
+# load_dotenv()
 
 
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-
-# if DB connection fails, HTTP Server for API is not started
-while True:
-    try:
-        conn = psycopg2.connect(host='localhost', database='ApiMon DB', user=DB_USER, password=DB_PASSWORD, cursor_factory=RealDictCursor)
-        cursor = conn.cursor()
-
-        print("\t[+] Database Connection was successful")
-        break
-    except Exception as e:
-        print("Connection to DB failed")
-        print(e)
-        time.sleep(2) # Bruh why not have an async function do this, and if the Async func fails, stop everything
+# DB_USER = os.getenv("DB_USER")
+# DB_PASSWORD = os.getenv("DB_PASSWORD")
+#
+# # if DB connection fails, HTTP Server for API is not started
+# while True:
+#     try:
+#         conn = psycopg2.connect(host='localhost', database='ApiMon DB', user=DB_USER, password=DB_PASSWORD, cursor_factory=RealDictCursor)
+#         cursor = conn.cursor()
+#
+#         print("\t[+] Database Connection was successful")
+#         break
+#     except Exception as e:
+#         print("Connection to DB failed")
+#         print(e)
+#         time.sleep(2) # Bruh why not have an async function do this, and if the Async func fails, stop everything
 
 
 
@@ -51,7 +48,9 @@ Endpoints
 # GET
 @app.get('/')
 async def root():
-    return {"message":"Welcome to my APIMon ( > - < )"} # auto convert to JSON
+    return {
+            "message":"Welcome to my APIMon ( > - < )"
+            } # auto convert to JSON
 
 @app.get('/posts')
 async def getPosts(db: Session = Depends(get_db)):
@@ -59,7 +58,8 @@ async def getPosts(db: Session = Depends(get_db)):
     # posts = cursor.fetchall()
 
     posts = db.query(models.Post).all()
-    return {"data": posts}
+
+    return  posts
 
 @app.get('/posts/{pid}') # PATH PARAMETER
 async def getPost(pid: int, db: Session = Depends(get_db)): # this checks if passed data can be converted to int or not, if Yes then it converts it. No longer int() conversions
@@ -74,7 +74,7 @@ async def getPost(pid: int, db: Session = Depends(get_db)): # this checks if pas
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id: {pid} was not found") # simple handler with response
 
-    return {"data": post}
+    return post
 
 
 
@@ -103,7 +103,7 @@ async def createPost(req: schemas.PostCreate, db: Session = Depends(get_db)): # 
     db.commit()
     db.refresh(new_post) # RETURNING *
 
-    return {"data": new_post}
+    return new_post
 
 
 # DELETE
@@ -148,4 +148,4 @@ async def updatePost(pid:int, req: schemas.PostCreate, db: Session = Depends(get
     post_query.update(req.model_dump(), synchronize_session=False)
     db.commit()
 
-    return {"updated": post_query.first()}
+    return post_query.first()
