@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Response, status, HTTPException
 from pydantic import BaseModel
 # from typing import Optional
-from random import randrange
+# from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
@@ -49,19 +49,6 @@ myPosts = [
 ] # storing in memory
 
 
-'''
-Utility
-'''
-def findPostById(pid):
-        for p in myPosts:
-            if p["id"] == pid:
-                return p
-
-def deletePostById(pid):
-    for p in myPosts:
-        if p["id"] == pid:
-            myPosts.remove(p)
-            return True
 
 
 '''
@@ -75,17 +62,20 @@ async def root():
 
 @app.get('/posts')
 async def getPosts():
+    cursor.execute("""SELECT * FROM posts""")
+    posts = cursor.fetchall()
     # return {"data": "This is your post ⚔️⚔️⚔️ "}
-    return {"data": myPosts}
+    return {"data": posts}
 
 @app.get('/posts/{pid}') # PATH PARAMETER
 async def getPost(pid: int): # this checks if passed data can be converted to int or not, if Yes then it converts it. No longer int() conversions
-    print(pid)
-    post = findPostById(pid)
+    # if not post:
+    #     # res.status_code = status.HTTP_404_NOT_FOUND
+    cursor.execute(""" SELECT * FROM posts WHERE id = %s """, (pid,))
+    post = cursor.fetchone()
     if not post:
-        # res.status_code = status.HTTP_404_NOT_FOUND
-        # return {"message": f"post with id: {pid} was not found"}
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id: {pid} was not found") # simple handler with response
+
     return {"data": post}
 
 
@@ -96,37 +86,46 @@ async def createPost(req: Post): # using the Post pydantic Model/Schema
     # print(req)
     # print(req.model_dump()) # converts to dict, all pydantic Models have this method
 
-    postDict = req.model_dump()
-    postDict["id"] = randrange(0, 1000000)
-    myPosts.append(postDict)
-    print(myPosts)
-    return {"data": postDict}
+    # postDict = req.model_dump()
+    # postDict["id"] = randrange(0, 1000000)
+    # myPosts.append(postDict)
+    cursor.execute(""" INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """, (req.title, req.content, req.published))
+    new_post = cursor.fetchone()
+
+    conn.commit()
+
+    return {"data": new_post}
 
 
 # DELETE
 # @app.delete('/posts/{pid}', status_code=status.HTTP_204_NO_CONTENT)
 @app.delete('/posts/{pid}') #buddy you can send a 200 back. there is no restriction as such.
 async def deletePost(pid: int):
-    deleted = deletePostById(pid)
+    cursor.execute(""" DELETE FROM posts WHERE id = %s RETURNING *""", (pid,))
+    deleted = cursor.fetchone()
+
+    conn.commit()
+
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id: {pid} does not exist")
-    return {"message": f"post deleted successfully"}
+
+    return {"deleted": deleted}
 
 
 # UPDATE with PUT
 @app.put('/posts/{pid}')
 async def updatePost(pid:int, req: Post):
 
-    print(req)
+    cursor.execute(""" UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, (req.title, req.content, req.published, pid))
 
-    post = req.model_dump()
-    post["id"] = pid
+    post = cursor.fetchone()
 
-    deleted = deletePostById(pid)
-    if not deleted:
-        myPosts.append(post)
-        raise HTTPException(status_code=status.HTTP_201_CREATED,detail=f"new post with id: {pid} created")
+    conn.commit()
 
-    myPosts.append(post)
+    if not post:
 
-    return {"message": "successfully updated the post"}
+        cursor.execute(""" INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) """, (req.title, req.content, req.published))
+        conn.commit()
+        raise HTTPException(status_code=status.HTTP_201_CREATED,detail=f"new post created!")
+
+    return {"updated": post}
