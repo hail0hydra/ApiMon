@@ -1,12 +1,10 @@
 from fastapi import Depends, FastAPI, Response, status, HTTPException
-# from typing import Optional
-# from random import randrange
-# import psycopg2
-# from psycopg2.extras import RealDictCursor
 
 from sqlalchemy.orm import Session
 from . import models, schemas
 from .database import SessionLocal, engine, get_db
+
+from typing import List
 
 
 app = FastAPI() # FastAPI instance
@@ -20,24 +18,6 @@ Database
 
 models.Base.metadata.create_all(bind=engine)
 
-# load_dotenv()
-
-
-# DB_USER = os.getenv("DB_USER")
-# DB_PASSWORD = os.getenv("DB_PASSWORD")
-#
-# # if DB connection fails, HTTP Server for API is not started
-# while True:
-#     try:
-#         conn = psycopg2.connect(host='localhost', database='ApiMon DB', user=DB_USER, password=DB_PASSWORD, cursor_factory=RealDictCursor)
-#         cursor = conn.cursor()
-#
-#         print("\t[+] Database Connection was successful")
-#         break
-#     except Exception as e:
-#         print("Connection to DB failed")
-#         print(e)
-#         time.sleep(2) # Bruh why not have an async function do this, and if the Async func fails, stop everything
 
 
 
@@ -52,7 +32,7 @@ async def root():
             "message":"Welcome to my APIMon ( > - < )"
             } # auto convert to JSON
 
-@app.get('/posts')
+@app.get('/posts', response_model=List[schemas.PostResponse]) # to say a List of the Model is same kind
 async def getPosts(db: Session = Depends(get_db)):
     # cursor.execute("""SELECT * FROM posts""")
     # posts = cursor.fetchall()
@@ -61,7 +41,7 @@ async def getPosts(db: Session = Depends(get_db)):
 
     return  posts
 
-@app.get('/posts/{pid}') # PATH PARAMETER
+@app.get('/posts/{pid}', response_model=schemas.PostResponse) # PATH PARAMETER
 async def getPost(pid: int, db: Session = Depends(get_db)): # this checks if passed data can be converted to int or not, if Yes then it converts it. No longer int() conversions
     # if not post:
     #     # res.status_code = status.HTTP_404_NOT_FOUND
@@ -81,7 +61,7 @@ async def getPost(pid: int, db: Session = Depends(get_db)): # this checks if pas
 
 
 # POST
-@app.post('/posts', status_code=status.HTTP_201_CREATED)
+@app.post('/posts', status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
 async def createPost(req: schemas.PostCreate, db: Session = Depends(get_db)): # using the Post pydantic Model/Schema
     # because of pydantic model being used, it will auto validate the required things mentioned in the model
     # print(req)
@@ -124,7 +104,7 @@ async def deletePost(pid: int, db: Session = Depends(get_db)):
 
 
 # UPDATE with PUT
-@app.put('/posts/{pid}')
+@app.put('/posts/{pid}', response_model=schemas.PostResponse)
 async def updatePost(pid:int, req: schemas.PostCreate, db: Session = Depends(get_db)):
 
     # cursor.execute(""" UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, (req.title, req.content, req.published, pid))
