@@ -1,5 +1,4 @@
 from fastapi import Depends, FastAPI, Response, status, HTTPException
-from pydantic import BaseModel
 # from typing import Optional
 # from random import randrange
 import psycopg2
@@ -9,18 +8,12 @@ import os
 from dotenv import load_dotenv
 
 from sqlalchemy.orm import Session
-from . import models
+from . import models, schemas
 from .database import SessionLocal, engine, get_db
-
 
 
 app = FastAPI() # FastAPI instance
 
-# Post Schema
-class Post(BaseModel): #extends BaseModel, inherits it, etc
-    title:  str
-    content: str
-    published: bool = True # default
 
 
 '''
@@ -48,14 +41,6 @@ while True:
         print("Connection to DB failed")
         print(e)
         time.sleep(2) # Bruh why not have an async function do this, and if the Async func fails, stop everything
-
-
-myPosts = [
-        {"title": "title of post 1", "content": "content of post 1", "published": False,  "id": 1},
-        {"title": "favourite foods", "content": "I like pasta", "published": True,  "id": 2},
-        {"title": "welcome to the dojo", "content": "The python Ninja welcomes you", "published": False,  "id": 0},
-] # storing in memory
-
 
 
 
@@ -92,18 +77,12 @@ async def getPost(pid: int, db: Session = Depends(get_db)): # this checks if pas
     return {"data": post}
 
 
-# SQLALCHEMY bs
-# @app.get('/sqlalchemy')
-# async def testPost(db: Session = Depends(get_db)):
-#
-#     posts = db.query(models.Post).all()
-#     return {"data": posts}
 
 
 
 # POST
 @app.post('/posts', status_code=status.HTTP_201_CREATED)
-async def createPost(req: Post, db: Session = Depends(get_db)): # using the Post pydantic Model/Schema
+async def createPost(req: schemas.PostCreate, db: Session = Depends(get_db)): # using the Post pydantic Model/Schema
     # because of pydantic model being used, it will auto validate the required things mentioned in the model
     # print(req)
     # print(req.model_dump()) # converts to dict, all pydantic Models have this method
@@ -146,7 +125,7 @@ async def deletePost(pid: int, db: Session = Depends(get_db)):
 
 # UPDATE with PUT
 @app.put('/posts/{pid}')
-async def updatePost(pid:int, req: Post, db: Session = Depends(get_db)):
+async def updatePost(pid:int, req: schemas.PostCreate, db: Session = Depends(get_db)):
 
     # cursor.execute(""" UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, (req.title, req.content, req.published, pid))
     #
