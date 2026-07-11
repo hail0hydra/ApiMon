@@ -1,12 +1,38 @@
-param (
-        [string]$Test,
-        [int]$id
-      )
+# ----------------------------------------------
+#
+# Author:       s1ck
+# Description:  Simple POSTMAN emulator
+# Date:         11 July 2026
+#
+# ----------------------------------------------
+
+
+
+
+
+
+
+
+# ----=={{[[[     HOW TO      ]]]}}==----
+#
+# USAGE:
+#
+#
+#   1. use " . ./postman.ps1"  to import all fuctions here into your local powershell session
+#
+#
+#   2. to get a list of all imported function use: 
+#
+#   ```ps1
+#   Get-ChildItem Function: | Where-Object { $_.ScriptBlock.File -like "*postman.ps1" }
+#   ```
+
+
 
 # root
-    function Get-Root {
-        curl -s http://localhost:8000/ -X GET | jq
-    }
+function Get-Root {
+    curl -s http://localhost:8000/ -X GET | jq
+}
 
 
 
@@ -15,7 +41,7 @@ function Get-Posts {
     curl -s http://localhost:8000/posts -X GET | jq
 }
 
-function Get-PostsById {
+function Get-PostsById ($id) {
     if ($id -gt 0){
 
         curl -s http://localhost:8000/posts/$id -X GET | jq
@@ -38,7 +64,7 @@ function Create-Post {
     curl -s http://localhost:8000/posts -X POST -H "Content-Type: application/json" -d $payload | jq
 }
 
-function Delete-Post {
+function Delete-Post ($id) {
     if ($id -gt 0){
 
         curl -s http://localhost:8000/posts/$id -X DELETE -i
@@ -64,7 +90,7 @@ function Update-Post {
 
 
 # users
-function Get-UserById {
+function Get-UserById ($id) {
     if ($id -gt 0){
 
         curl -s http://localhost:8000/users/$id -X GET | jq
@@ -88,14 +114,4 @@ function Create-User {
 
 }
 
-
-switch ($Test) {
-    "gp" { Get-Posts }
-    "gpi" { Get-PostsById }
-    "gui" { Get-UserById }
-    "cp" { Create-Post }
-    "cu" { Create-User }
-    "dp" { Delete-Post }
-    "up" { Update-Post }
-    default { Get-Root }
-}
+Get-Root
