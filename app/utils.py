@@ -6,3 +6,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") # settgin defa
 
 def hash(password: str):
     return pwd_context.hash(password)
+
+
+def verify(password, hash):
+    return pwd_context.verify(password, hash)

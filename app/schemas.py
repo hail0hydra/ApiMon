@@ -38,3 +38,10 @@ class UserReponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+# Auth
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
