@@ -7,7 +7,10 @@ from ..database import get_db
 
 
 
-router = APIRouter()
+router = APIRouter(
+        prefix= "/posts",
+        tags = ['Posts']
+    )
 
 
 
@@ -18,7 +21,7 @@ GET (Read)
 ---------------------------------------------------
 '''
 
-@router.get('/posts', response_model=List[schemas.PostResponse]) # to say a List of the Model is same kind
+@router.get('/', response_model=List[schemas.PostResponse]) # to say a List of the Model is same kind
 async def getPosts(db: Session = Depends(get_db)):
     # cursor.execute("""SELECT * FROM posts""")
     # posts = cursor.fetchall()
@@ -27,7 +30,7 @@ async def getPosts(db: Session = Depends(get_db)):
 
     return  posts
 
-@router.get('/posts/{pid}', response_model=schemas.PostResponse) # PATH PARAMETER
+@router.get('/{pid}', response_model=schemas.PostResponse) # PATH PARAMETER
 async def getPost(pid: int, db: Session = Depends(get_db)): # this checks if passed data can be converted to int or not, if Yes then it converts it. No longer int() conversions
     # if not post:
     #     # res.status_code = status.HTTP_404_NOT_FOUND
@@ -49,7 +52,7 @@ POST (Create)
 ---------------------------------------------------
 '''
 
-@router.post('/posts', status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
+@router.post('/', status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
 async def createPost(req: schemas.PostCreate, db: Session = Depends(get_db)): # using the Post pydantic Model/Schema
     # because of pydantic model being used, it will auto validate the required things mentioned in the model
     # print(req)
@@ -80,7 +83,7 @@ DELETE (Delete)
 '''
 
 # @router.delete('/posts/{pid}', status_code=status.HTTP_204_NO_CONTENT)
-@router.delete('/posts/{pid}', status_code=status.HTTP_204_NO_CONTENT) #buddy you can send a 200 back. there is no restriction as such.
+@router.delete('/{pid}', status_code=status.HTTP_204_NO_CONTENT) #buddy you can send a 200 back. there is no restriction as such.
 async def deletePost(pid: int, db: Session = Depends(get_db)):
     # cursor.execute(""" DELETE FROM posts WHERE id = %s RETURNING *""", (pid,))
     # deleted = cursor.fetchone()
@@ -100,7 +103,7 @@ async def deletePost(pid: int, db: Session = Depends(get_db)):
 PUT (Update)
 ---------------------------------------------------
 '''
-@router.put('/posts/{pid}', response_model=schemas.PostResponse)
+@router.put('/{pid}', response_model=schemas.PostResponse)
 async def updatePost(pid:int, req: schemas.PostCreate, db: Session = Depends(get_db)):
 
     # cursor.execute(""" UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, (req.title, req.content, req.published, pid))

@@ -38,7 +38,7 @@ function Get-Root {
 
 # posts
 function Get-Posts {
-    curl -s http://localhost:8000/posts -X GET | jq
+    curl -s http://localhost:8000/posts -X GET -L | jq
 }
 
 function Get-PostsById ($id) {
@@ -61,7 +61,7 @@ function Create-Post {
                 content = "posted by powershell $guid"
         } | ConvertTo-Json -Compress
 
-    curl -s http://localhost:8000/posts -X POST -H "Content-Type: application/json" -d $payload | jq
+    curl -s http://localhost:8000/posts -X POST -H "Content-Type: application/json" -d $payload -L | jq
 }
 
 function Delete-Post ($id) {
@@ -110,7 +110,7 @@ function Create-User {
                 password = "P0w3r==$guid==Sh3ll"
         } | ConvertTo-Json -Compress
 
-    curl -s http://localhost:8000/users -X POST -H "Content-Type: application/json" -d $payload | jq
+    curl -s http://localhost:8000/users -X POST -H "Content-Type: application/json" -d $payload -L | jq
 
 }
 

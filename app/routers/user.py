@@ -6,7 +6,10 @@ from ..database import get_db
 
 
 
-router = APIRouter()
+router = APIRouter(
+        prefix = "/users",
+        tags = ["Users"]
+        )
 
 
 
@@ -18,7 +21,7 @@ GET (Read)
 ---------------------------------------------------
 '''
 
-@router.get('/users/{uid}', response_model=schemas.UserReponse)
+@router.get('/{uid}', response_model=schemas.UserReponse)
 async def getUser(uid: int, db: Session = Depends(get_db)):
     
     user = db.query(models.User).filter(models.User.id == uid).first()
@@ -36,7 +39,7 @@ POST (Create)
 ---------------------------------------------------
 '''
 
-@router.post('/users', status_code=status.HTTP_201_CREATED, response_model=schemas.UserReponse)
+@router.post('/', status_code=status.HTTP_201_CREATED, response_model=schemas.UserReponse)
 async def createUser(req: schemas.UserCreate ,db: Session = Depends(get_db)):
     
     #hash the password
