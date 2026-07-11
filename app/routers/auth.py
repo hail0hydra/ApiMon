@@ -21,13 +21,13 @@ async def gateHouse(req: OAuth2PasswordRequestForm = Depends() ,db: Session = De
     user = db.query(models.User).filter(models.User.email == req.username).first()
 
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="invalid credentials")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="invalid credentials")
 
 
     # verify password
 
     if not utils.verify(req.password, user.password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="invalid credentials")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="invalid credentials")
 
     # create a token
 

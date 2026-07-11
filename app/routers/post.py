@@ -1,7 +1,7 @@
 from fastapi import Depends, status, HTTPException, APIRouter
 from typing import List
 from sqlalchemy.orm import Session
-from .. import models, schemas
+from .. import models, schemas, ouath2
 from ..database import get_db
 
 
@@ -53,7 +53,7 @@ POST (Create)
 '''
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
-async def createPost(req: schemas.PostCreate, db: Session = Depends(get_db)): # using the Post pydantic Model/Schema
+async def createPost(req: schemas.PostCreate, db: Session = Depends(get_db), get_current_user: int = Depends(ouath2.getCurrentUser)): # using the Post pydantic Model/Schema
     # because of pydantic model being used, it will auto validate the required things mentioned in the model
     # print(req)
     # print(req.model_dump()) # converts to dict, all pydantic Models have this method

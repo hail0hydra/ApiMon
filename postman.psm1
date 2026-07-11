@@ -21,13 +21,13 @@
 #   1. use "Import-Module ./postman.psm1"  to import all fuctions here into your local powershell session
 #
 #
-#   2. to get a list of all imported function use: (THIS MIGHT NOT WORK NOW)
+#   2. to get a list of all imported function use:
 #
 #   ```powershell
 #       Get-Command -Module postman 
 #   ```
 #
-#   3. To unload just "Remove-Module -Name postman.psm1"
+#   3. To unload just "Remove-Module -Name postman"
 
 
 
@@ -54,7 +54,8 @@ function Get-PostsById ($id) {
     }
 }
 
-function Create-Post {
+function Create-Post ($token) {
+
 
     $guid = (New-Guid).Guid
 
@@ -63,7 +64,14 @@ function Create-Post {
                 content = "posted by powershell $guid"
         } | ConvertTo-Json -Compress
 
-    curl -s http://localhost:8000/posts -X POST -H "Content-Type: application/json" -d $payload -L | jq
+    if ($null -eq $token) {
+        Write-Host "enter access token with: -token"
+            return
+    } else {
+
+        curl -s http://localhost:8000/posts -X POST -H "Content-Type: application/json" -H "Authorization: bearer $token" -d $payload -L | jq
+    }
+
 }
 
 function Delete-Post ($id) {
@@ -133,22 +141,22 @@ function Create-User ($user, $passwd) {
 
 function Login-User ($user, $passwd) {
 
-    # $payload = @{
-    #     email = "$user"
-    #         password = "$passwd"
-    # } | ConvertTo-Json -Compress
-    #
+# $payload = @{
+#     email = "$user"
+#         password = "$passwd"
+# } | ConvertTo-Json -Compress
+#
     $payload = "username=$user&password=$passwd"
 
-    if ($null -eq $user){
-        Write-Host "enter username with:  -user"
-            return
-    } elseif ($null -eq $passwd) {
-        Write-Host "enter password with:  -passwd"
-    } else {
+        if ($null -eq $user){
+            Write-Host "enter username with:  -user"
+                return
+        } elseif ($null -eq $passwd) {
+            Write-Host "enter password with:  -passwd"
+        } else {
 
-        curl -s http://localhost:8000/login -X POST -H "Content-Type: application/x-www-form-urlencoded" -d $payload -L | jq
-    }
+            curl -s http://localhost:8000/login -X POST -H "Content-Type: application/x-www-form-urlencoded" -d $payload -L | jq
+        }
 
 }
 
