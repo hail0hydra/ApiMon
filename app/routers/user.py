@@ -6,10 +6,7 @@ from ..database import get_db
 
 
 
-router = APIRouter(
-        prefix = "/users",
-        tags = ["Users"]
-        )
+router = APIRouter(prefix = "/users", tags = ["Users"])
 
 
 
@@ -39,7 +36,7 @@ POST (Create)
 ---------------------------------------------------
 '''
 
-@router.post('/', status_code=status.HTTP_201_CREATED, response_model=schemas.UserReponse)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=schemas.UserReponse)
 async def createUser(req: schemas.UserCreate ,db: Session = Depends(get_db)):
     
     #hash the password

@@ -1,11 +1,12 @@
 from fastapi import Depends, status, HTTPException
-from jose import JWSError, JWTError, jwt
+from jose import  JWTError, jwt
 import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
 
-from app import schemas
+from . import schemas, database, models
 
 
 
@@ -21,9 +22,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
 load_dotenv()
 
 # openssl rand -hex 32
-SECRET_KEY = os.getenv("JWT_SECRET_KEY") 
+SECRET_KEY: str = os.getenv("JWT_SECRET_KEY") 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
 def createAccessToken(data: dict):
@@ -41,21 +42,25 @@ def createAccessToken(data: dict):
 def verifyAccessToken(token: str, credential_exception):
 
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload: dict = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
-        id:str = payload.get("user_id")
+        id: int = payload.get("user_id")
 
         if not id:
             raise credential_exception
         token_data = schemas.TokenData(id=id)
-    except JWSError:
+    except JWTError:
         raise credential_exception
 
     return token_data
 
 
 
-def getCurrentUser(token: str = Depends(oauth2_scheme)):
+def getCurrentUser(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
     credential_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Could not valdate credentials", headers={'WWW-Authenticate': 'Bearer'})
 
-    return verifyAccessToken(token, credential_exception)
+    token_id = verifyAccessToken(token, credential_exception)
+
+    user = db.query(models.User).filter(models.User.id == token_id.id).first()
+
+    return user

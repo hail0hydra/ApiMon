@@ -43,10 +43,8 @@ class UserReponse(BaseModel):
 
 # Auth
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
+class UserLogin(UserCreate):
+    pass
 
 class Token(BaseModel):
     access_token: str
@@ -54,4 +52,4 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    id: Optional[str] = None
+    id: Optional[int] = None

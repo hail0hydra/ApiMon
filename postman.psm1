@@ -8,11 +8,6 @@
 
 
 
-
-
-
-
-
 # ----=={{[[[     HOW TO      ]]]}}==----
 #
 # USAGE:
@@ -39,14 +34,22 @@ function Get-Root {
 
 
 # posts
-function Get-Posts {
-    curl -s http://localhost:8000/posts -X GET -L | jq
+function Get-Posts ($token) {
+    if ($null -eq $token) {
+        Write-Host "enter access token with: -token"
+            return
+    }
+    curl -s http://localhost:8000/posts -X GET -H "Authorization: Bearer $token"  -L | jq
 }
 
-function Get-PostsById ($id) {
+function Get-PostsById ($id, $token) {
+    if ($null -eq $token) {
+        Write-Host "enter access token with: -token"
+            return
+    }
     if ($id -gt 0){
 
-        curl -s http://localhost:8000/posts/$id -X GET | jq
+        curl -s http://localhost:8000/posts/$id -X GET -H "Authorization: Bearer $token" | jq
 
     }
     else {
@@ -69,15 +72,20 @@ function Create-Post ($token) {
             return
     } else {
 
-        curl -s http://localhost:8000/posts -X POST -H "Content-Type: application/json" -H "Authorization: bearer $token" -d $payload -L | jq
+        curl -s http://localhost:8000/posts -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $token" -d $payload -L | jq
     }
 
 }
 
-function Delete-Post ($id) {
+function Delete-Post ($id, $token) {
+
+    if ($null -eq $token){
+        Write-Host "enter access token with: -token"
+            return
+    }
     if ($id -gt 0){
 
-        curl -s http://localhost:8000/posts/$id -X DELETE -i
+        curl -s http://localhost:8000/posts/$id -X DELETE  -H "Authorization: Bearer $token"  -i 
 
     }
     else {
@@ -85,16 +93,21 @@ function Delete-Post ($id) {
     }
 }
 
-function Update-Post {
+function Update-Post ($token) {
+
+    if ($null -eq $token) {
+        Write-Host "enter access token with: -token"
+            return
+    }
 
     $guid = (New-Guid).Guid
 
         $payload = @{
-            title = "powershell script $guid"
-                content = "posted by powershell $guid"
+            title = "powershell UPDATE $guid"
+                content = "UPDATED by powershell $guid"
         } | ConvertTo-Json -Compress
 
-    curl -s http://localhost:8000/posts/20 -X PUT -H "Content-Type: application/json" -d $payload | jq
+    curl -s http://localhost:8000/posts/27 -X PUT -H "Content-Type: application/json" -H "Authorization: Bearer $token" -d $payload | jq
 
 }
 

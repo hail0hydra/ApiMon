@@ -1,18 +1,16 @@
-from fastapi import APIRouter, Depends, status, HTTPException, Response
+from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from .. import database, schemas, models, utils, ouath2
+from .. import database, models, utils, ouath2, schemas
 
 
-router = APIRouter(
-        tags=["Authentication"]
-        )
+router = APIRouter(tags=["Authentication"])
 
 
-@router.post('/login')
+@router.post('/login', response_model=schemas.Token)
 # async def gateHouse(req: schemas.UserLogin ,db: Session = Depends(database.get_db)):
-async def gateHouse(req: OAuth2PasswordRequestForm = Depends() ,db: Session = Depends(database.get_db)):
+async def gateHouse(req: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
 
 
     # The OAuth2PasswordRequestForm stores the user email not as email but username, the model is defined like that
